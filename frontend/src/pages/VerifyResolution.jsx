@@ -216,9 +216,12 @@ function VerifyResolution() {
    * The citizen API does not return an after-image field,
    * so we use the existing uploaded file directly.
    */
-  const afterImage =
-    "http://127.0.0.1:8000/uploads/resolutions/ad69af581ed04f95a2e0076aeca53fe6.webp";
-
+  const afterImage = getImageUrl(
+  issue?.after_image,
+  issue?.after_image_url,
+  issue?.resolution_image,
+  issue?.resolution_image_url
+);
   console.log("Before image:", beforeImage);
   console.log("After image:", afterImage);
 

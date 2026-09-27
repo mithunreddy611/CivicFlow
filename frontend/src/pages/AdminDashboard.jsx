@@ -16,7 +16,7 @@ import { useAuth } from "../context/AuthContext";
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
 
 export default function AdminDashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const [dashboard, setDashboard] = useState(null);
   const [issues, setIssues] = useState([]);
@@ -212,15 +212,23 @@ export default function AdminDashboard() {
         </div>
 
         <div className="user-section">
-          <div className="user-avatar">
-            {user?.name?.charAt(0).toUpperCase()}
-          </div>
+  <div className="user-avatar">
+    {user?.name?.charAt(0).toUpperCase()}
+  </div>
 
-          <div>
-            <strong>{user?.name}</strong>
-            <span>Administrator</span>
-          </div>
-        </div>
+  <div>
+    <strong>{user?.name}</strong>
+    <span>Administrator</span>
+  </div>
+
+  <button
+    type="button"
+    className="logout-button"
+    onClick={logout}
+  >
+    Logout
+  </button>
+</div>
       </header>
 
       <main className="dashboard-content">

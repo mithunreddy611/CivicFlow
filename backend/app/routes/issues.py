@@ -13,7 +13,7 @@ from fastapi import (
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Issue, Department, IssueHistory, User
+from app.models import Issue, Department, IssueHistory, ResolutionProof, User
 from app.routes.auth import get_current_user
 from app.schemas.issue import IssueResponse
 from app.services.routing import get_department_name
@@ -42,6 +42,17 @@ def get_my_issues(
         .order_by(Issue.created_at.desc())
         .all()
     )
+
+    for issue in issues:
+        proof = (
+            db.query(ResolutionProof)
+            .filter(ResolutionProof.issue_id == issue.id)
+            .order_by(ResolutionProof.submitted_at.desc())
+            .first()
+        )
+
+        issue.after_image = proof.after_image if proof else None
+        issue.resolution_remarks = proof.remarks if proof else None
 
     return issues
 

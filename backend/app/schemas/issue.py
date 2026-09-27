@@ -12,6 +12,7 @@ class IssueCreate(BaseModel):
     location_text: Optional[str] = None
     priority: str = "MEDIUM"
 
+
 class IssueResponse(BaseModel):
     id: int
     title: str
@@ -21,6 +22,8 @@ class IssueResponse(BaseModel):
     longitude: Optional[float]
     location_text: Optional[str]
     before_image: Optional[str]
+    after_image: Optional[str] = None
+    resolution_remarks: Optional[str] = None
     priority: str
     status: str
     department_id: Optional[int]

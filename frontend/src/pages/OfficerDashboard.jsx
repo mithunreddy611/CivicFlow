@@ -16,7 +16,7 @@ import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 export default function OfficerDashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -187,15 +187,23 @@ export default function OfficerDashboard() {
         </div>
 
         <div className="user-section">
-          <div className="user-avatar">
-            {user?.name?.charAt(0).toUpperCase()}
-          </div>
+  <div className="user-avatar">
+    {user?.name?.charAt(0).toUpperCase()}
+  </div>
 
-          <div>
-            <strong>{user?.name}</strong>
-            <span>Officer</span>
-          </div>
-        </div>
+  <div>
+    <strong>{user?.name}</strong>
+    <span>Officer</span>
+  </div>
+
+  <button
+    type="button"
+    className="logout-button"
+    onClick={logout}
+  >
+    Logout
+  </button>
+</div>
       </header>
 
       <main className="dashboard-content">
