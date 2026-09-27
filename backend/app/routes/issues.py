@@ -25,6 +25,25 @@ router = APIRouter(
     tags=["Issues"],
 )
 
+@router.get("/my", response_model=list[IssueResponse])
+def get_my_issues(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role != "CITIZEN":
+        raise HTTPException(
+            status_code=403,
+            detail="Only citizens can access their issues",
+        )
+
+    issues = (
+        db.query(Issue)
+        .filter(Issue.reported_by == current_user.id)
+        .order_by(Issue.created_at.desc())
+        .all()
+    )
+
+    return issues
 
 @router.post(
     "",
