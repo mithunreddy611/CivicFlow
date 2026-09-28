@@ -15,111 +15,65 @@ def seed_database():
         # -------------------------
         # Departments
         # -------------------------
+        def get_or_create_dept(name):
+            d = db.query(Department).filter(Department.name == name).first()
+            if not d:
+                d = Department(name=name)
+                db.add(d)
+                db.commit()
+                db.refresh(d)
+            return d
 
-        road = Department(name="Road Maintenance")
-        electrical = Department(name="Electrical Department")
-        waste = Department(name="Waste Management")
-        water = Department(name="Water Department")
-
-        db.add_all([
-            road,
-            electrical,
-            waste,
-            water,
-        ])
-
-        db.commit()
+        road = get_or_create_dept("Road Maintenance")
+        electrical = get_or_create_dept("Electrical Department")
+        waste = get_or_create_dept("Waste Management")
+        water = get_or_create_dept("Water Department")
 
         # -------------------------
         # Users
         # -------------------------
+        def get_or_create_user(name, email, password, role):
+            u = db.query(User).filter(User.email == email).first()
+            if not u:
+                u = User(
+                    name=name,
+                    email=email,
+                    password_hash=hash_password(password),
+                    role=role,
+                )
+                db.add(u)
+                db.commit()
+                db.refresh(u)
+            return u
 
-        citizen = User(
-            name="Test Citizen",
-            email="citizen@civicflow.com",
-            password_hash=hash_password("citizen123"),
-            role="CITIZEN",
-        )
-
-        admin = User(
-            name="System Admin",
-            email="admin@civicflow.com",
-            password_hash=hash_password("admin123"),
-            role="ADMIN",
-        )
-
-        arjun_user = User(
-            name="Arjun",
-            email="arjun@civicflow.com",
-            password_hash=hash_password("arjun123"),
-            role="OFFICER",
-        )
-
-        priya_user = User(
-            name="Priya",
-            email="priya@civicflow.com",
-            password_hash=hash_password("priya123"),
-            role="OFFICER",
-        )
-
-        ravi_user = User(
-            name="Ravi",
-            email="ravi@civicflow.com",
-            password_hash=hash_password("ravi123"),
-            role="OFFICER",
-        )
-
-        ananya_user = User(
-            name="Ananya",
-            email="ananya@civicflow.com",
-            password_hash=hash_password("ananya123"),
-            role="OFFICER",
-        )
-
-        db.add_all([
-            citizen,
-            admin,
-            arjun_user,
-            priya_user,
-            ravi_user,
-            ananya_user,
-        ])
-
-        db.commit()
+        citizen = get_or_create_user("Test Citizen", "citizen@civicflow.com", "citizen123", "CITIZEN")
+        admin = get_or_create_user("System Admin", "admin@civicflow.com", "admin123", "ADMIN")
+        arjun_user = get_or_create_user("Arjun", "arjun@civicflow.com", "arjun123", "OFFICER")
+        priya_user = get_or_create_user("Priya", "priya@civicflow.com", "priya123", "OFFICER")
+        ravi_user = get_or_create_user("Ravi", "ravi@civicflow.com", "ravi123", "OFFICER")
+        ananya_user = get_or_create_user("Ananya", "ananya@civicflow.com", "ananya123", "OFFICER")
 
         # -------------------------
         # Officers
         # -------------------------
+        def get_or_create_officer(user_id, department_id):
+            o = db.query(Officer).filter(Officer.user_id == user_id).first()
+            if not o:
+                o = Officer(
+                    user_id=user_id,
+                    department_id=department_id,
+                    active_issue_count=0,
+                    is_available=True,
+                )
+                db.add(o)
+                db.commit()
+                db.refresh(o)
+            return o
 
-        officers = [
-            Officer(
-                user_id=arjun_user.id,
-                department_id=road.id,
-                active_issue_count=0,
-                is_available=True,
-            ),
-            Officer(
-                user_id=priya_user.id,
-                department_id=electrical.id,
-                active_issue_count=0,
-                is_available=True,
-            ),
-            Officer(
-                user_id=ravi_user.id,
-                department_id=waste.id,
-                active_issue_count=0,
-                is_available=True,
-            ),
-            Officer(
-                user_id=ananya_user.id,
-                department_id=water.id,
-                active_issue_count=0,
-                is_available=True,
-            ),
-        ]
-
-        db.add_all(officers)
-        db.commit()
+        get_or_create_officer(arjun_user.id, road.id)
+        get_or_create_officer(priya_user.id, electrical.id)
+        get_or_create_officer(ravi_user.id, waste.id)
+        get_or_create_officer(ananya_user.id, water.id)
 
         print("CivicFlow seed data created successfully.")
 

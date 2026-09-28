@@ -20,8 +20,11 @@ from app.models import (
 )
 
 
+from app.seed import seed_database
+
 # Create database tables
 Base.metadata.create_all(bind=engine)
+seed_database()
 
 
 app = FastAPI(
@@ -29,6 +32,9 @@ app = FastAPI(
     description="Smart Civic Issue Reporting and Resolution System",
     version="1.0.0",
 )
+import os
+
+os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 
