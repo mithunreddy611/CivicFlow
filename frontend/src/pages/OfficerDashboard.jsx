@@ -14,9 +14,13 @@ import {
 } from "lucide-react";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import Navbar from "../components/layout/Navbar";
+import StatCard from "../components/ui/StatCard";
+import { StatusBadge } from "../components/ui/Badge";
+import Button from "../components/ui/Button";
 
 export default function OfficerDashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,14 +41,11 @@ export default function OfficerDashboard() {
 
     try {
       const response = await api.get("/api/officer/issues");
-
       setIssues(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       console.error("Failed to fetch officer issues:", err);
-
       setError(
-        err.response?.data?.detail ||
-          "Unable to load assigned issues."
+        err.response?.data?.detail || "Unable to load assigned issues."
       );
     } finally {
       setLoading(false);
@@ -62,17 +63,11 @@ export default function OfficerDashboard() {
 
     try {
       await api.post(`/api/officer/issues/${issueId}/start`);
-
-      setSuccess("Issue marked as in progress.");
-
+      setSuccess("Issue status updated to In Progress.");
       await fetchIssues();
     } catch (err) {
       console.error("Failed to start issue:", err);
-
-      setError(
-        err.response?.data?.detail ||
-          "Unable to start this issue."
-      );
+      setError(err.response?.data?.detail || "Unable to start this issue.");
     } finally {
       setStartingId(null);
     }
@@ -95,9 +90,7 @@ export default function OfficerDashboard() {
   const handleResolveIssue = async (e) => {
     e.preventDefault();
 
-    if (!selectedIssue) {
-      return;
-    }
+    if (!selectedIssue) return;
 
     if (!afterImage) {
       setError("Please upload an after-resolution photo.");
@@ -110,7 +103,6 @@ export default function OfficerDashboard() {
 
     try {
       const formData = new FormData();
-
       formData.append("after_image", afterImage);
       formData.append("remarks", remarks);
 
@@ -120,115 +112,53 @@ export default function OfficerDashboard() {
       );
 
       setSuccess(
-        "Issue resolved successfully and sent for citizen verification."
+        "Issue marked as resolved and submitted for citizen verification."
       );
-
       closeResolveForm();
-
       await fetchIssues();
     } catch (err) {
       console.error("Failed to resolve issue:", err);
-
-      setError(
-        err.response?.data?.detail ||
-          "Unable to resolve this issue."
-      );
+      setError(err.response?.data?.detail || "Unable to resolve this issue.");
     } finally {
       setResolvingId(null);
     }
   };
 
-  const getStatusClass = (status) => {
-    switch (status) {
-      case "CLOSED":
-        return "status-closed";
+  const inProgressCount = issues.filter(
+    (issue) => issue.status === "IN_PROGRESS"
+  ).length;
 
-      case "AWAITING_VERIFICATION":
-        return "status-verification";
+  const awaitingCount = issues.filter(
+    (issue) => issue.status === "AWAITING_VERIFICATION"
+  ).length;
 
-      case "IN_PROGRESS":
-        return "status-progress";
-
-      case "REOPENED":
-        return "status-reopened";
-
-      case "ASSIGNED":
-        return "status-assigned";
-
-      default:
-        return "status-reported";
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "CLOSED":
-        return <CheckCircle2 size={16} />;
-
-      case "AWAITING_VERIFICATION":
-        return <AlertCircle size={16} />;
-
-      case "IN_PROGRESS":
-        return <Clock size={16} />;
-
-      default:
-        return <ClipboardList size={16} />;
-    }
-  };
+  const closedCount = issues.filter(
+    (issue) => issue.status === "CLOSED"
+  ).length;
 
   return (
     <div className="dashboard-page">
-      <header className="dashboard-header">
-        <div>
-          <div className="brand">
-            <div className="brand-icon">C</div>
-            <span>CivicFlow</span>
-          </div>
-        </div>
-
-        <div className="user-section">
-  <div className="user-avatar">
-    {user?.name?.charAt(0).toUpperCase()}
-  </div>
-
-  <div>
-    <strong>{user?.name}</strong>
-    <span>Officer</span>
-  </div>
-
-  <button
-    type="button"
-    className="logout-button"
-    onClick={logout}
-  >
-    Logout
-  </button>
-</div>
-      </header>
+      <Navbar roleTitle="Field Officer" />
 
       <main className="dashboard-content">
         <section className="welcome-section">
           <div>
-            <p className="eyebrow">OFFICER DASHBOARD</p>
-
-            <h1>
-              Hello, {user?.name?.split(" ")[0]} 👋
-            </h1>
-
+            <p className="eyebrow">OFFICER OPERATIONS</p>
+            <h1>Hello, {user?.name?.split(" ")[0]} 👋</h1>
             <p>
-              Manage assigned civic issues and track them through
-              resolution.
+              Manage assigned community repairs, log field work progress, and
+              submit photo verification proofs.
             </p>
           </div>
 
-          <button
-            className="secondary-button"
+          <Button
+            variant="secondary"
+            icon={RefreshCw}
             onClick={fetchIssues}
             disabled={loading}
           >
-            <RefreshCw size={18} />
-            Refresh
-          </button>
+            Refresh Queue
+          </Button>
         </section>
 
         {error && (
@@ -246,108 +176,57 @@ export default function OfficerDashboard() {
         )}
 
         <section className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-icon">
-              <ClipboardList size={22} />
-            </div>
-
-            <div>
-              <span>Total Assigned</span>
-              <strong>{issues.length}</strong>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon">
-              <Clock size={22} />
-            </div>
-
-            <div>
-              <span>In Progress</span>
-
-              <strong>
-                {
-                  issues.filter(
-                    (issue) => issue.status === "IN_PROGRESS"
-                  ).length
-                }
-              </strong>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon">
-              <AlertCircle size={22} />
-            </div>
-
-            <div>
-              <span>Awaiting Verification</span>
-
-              <strong>
-                {
-                  issues.filter(
-                    (issue) =>
-                      issue.status === "AWAITING_VERIFICATION"
-                  ).length
-                }
-              </strong>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon">
-              <CheckCircle2 size={22} />
-            </div>
-
-            <div>
-              <span>Completed</span>
-
-              <strong>
-                {
-                  issues.filter(
-                    (issue) => issue.status === "CLOSED"
-                  ).length
-                }
-              </strong>
-            </div>
-          </div>
+          <StatCard
+            icon={ClipboardList}
+            label="Total Assigned"
+            value={issues.length}
+          />
+          <StatCard
+            icon={Clock}
+            label="In Progress"
+            value={inProgressCount}
+          />
+          <StatCard
+            icon={AlertCircle}
+            label="Awaiting Verification"
+            value={awaitingCount}
+          />
+          <StatCard
+            icon={CheckCircle2}
+            label="Completed & Closed"
+            value={closedCount}
+          />
         </section>
 
         <section className="issues-section">
           <div className="section-heading">
             <div>
               <p className="eyebrow">WORK QUEUE</p>
-              <h2>Assigned Issues</h2>
+              <h2>Assigned Civic Tasks</h2>
             </div>
           </div>
 
           {loading ? (
             <div className="empty-state">
-              <RefreshCw size={32} />
-
+              <RefreshCw className="btn-spinner" size={32} />
               <h3>Loading assigned issues...</h3>
             </div>
           ) : issues.length === 0 ? (
             <div className="empty-state">
-              <ClipboardList size={40} />
-
+              <ClipboardList size={38} strokeWidth={1.8} />
               <h3>No issues assigned</h3>
-
-              <p>
-                New issues routed to your department will appear here.
-              </p>
+              <p>New civic issues routed to your department will appear here.</p>
             </div>
           ) : (
             <div className="issues-list">
               {issues.map((issue) => (
                 <div className="issue-card" key={issue.id}>
                   <div className="issue-main">
-                    <div className="issue-category">
+                    <span className="issue-category">
                       {issue.category?.replaceAll("_", " ")}
-                    </div>
+                    </span>
 
                     <h3>{issue.title}</h3>
-
                     <p>{issue.description}</p>
 
                     <div className="issue-meta">
@@ -368,56 +247,42 @@ export default function OfficerDashboard() {
                   </div>
 
                   <div className="issue-status">
-                    <span
-                      className={`status-badge ${getStatusClass(
-                        issue.status
-                      )}`}
-                    >
-                      {getStatusIcon(issue.status)}
-
-                      {issue.status?.replaceAll("_", " ")}
-                    </span>
+                    <StatusBadge status={issue.status} />
 
                     {(issue.status === "REPORTED" ||
                       issue.status === "ASSIGNED" ||
                       issue.status === "REOPENED") && (
-                      <button
-                        className="primary-button"
-                        onClick={() =>
-                          handleStartIssue(issue.id)
-                        }
-                        disabled={startingId === issue.id}
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        icon={Play}
+                        onClick={() => handleStartIssue(issue.id)}
+                        loading={startingId === issue.id}
                       >
-                        <Play size={17} />
-
-                        {startingId === issue.id
-                          ? "Starting..."
-                          : "Start Work"}
-                      </button>
+                        {startingId === issue.id ? "Starting..." : "Start Work"}
+                      </Button>
                     )}
 
                     {issue.status === "IN_PROGRESS" && (
-                      <button
-                        className="primary-button"
-                        onClick={() =>
-                          openResolveForm(issue)
-                        }
+                      <Button
+                        variant="fin"
+                        size="sm"
+                        icon={CheckCircle2}
+                        onClick={() => openResolveForm(issue)}
                       >
-                        <CheckCircle2 size={17} />
                         Resolve Issue
-                      </button>
+                      </Button>
                     )}
 
-                    {issue.status ===
-                      "AWAITING_VERIFICATION" && (
+                    {issue.status === "AWAITING_VERIFICATION" && (
                       <div className="issue-action-note">
-                        Waiting for citizen verification.
+                        Waiting for citizen verification
                       </div>
                     )}
 
                     {issue.status === "CLOSED" && (
                       <div className="issue-action-note">
-                        Resolution verified and closed.
+                        Resolution verified & closed
                       </div>
                     )}
                   </div>
@@ -429,20 +294,24 @@ export default function OfficerDashboard() {
       </main>
 
       {selectedIssue && (
-        <div className="modal-overlay">
-          <div className="resolve-modal">
+        <div className="modal-overlay" onClick={closeResolveForm}>
+          <div
+            className="resolve-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="resolve-modal-header">
               <div>
                 <p className="eyebrow">RESOLUTION PROOF</p>
-
-                <h2>Resolve Issue</h2>
+                <h2>Submit Resolution</h2>
               </div>
 
               <button
+                type="button"
                 className="modal-close"
                 onClick={closeResolveForm}
+                aria-label="Close dialog"
               >
-                <X size={22} />
+                <X size={20} />
               </button>
             </div>
 
@@ -450,38 +319,32 @@ export default function OfficerDashboard() {
               <span className="issue-category">
                 {selectedIssue.category?.replaceAll("_", " ")}
               </span>
-
               <h3>{selectedIssue.title}</h3>
-
               <p>{selectedIssue.description}</p>
 
               {selectedIssue.location && (
-                <div className="issue-meta">
+                <div className="issue-meta" style={{ marginTop: "6px" }}>
                   <span>
-                    <MapPin size={15} />
+                    <MapPin size={14} />
                     {selectedIssue.location}
                   </span>
                 </div>
               )}
             </div>
 
-            <form
-              className="resolve-form"
-              onSubmit={handleResolveIssue}
-            >
+            <form className="resolve-form" onSubmit={handleResolveIssue}>
               <div className="form-group">
-                <label>After Resolution Photo *</label>
+                <label>Completed Work Photo *</label>
 
                 <div className="upload-box">
                   <Upload size={28} />
-
                   <strong>
-                    Upload a photo showing the completed work
+                    {afterImage
+                      ? afterImage.name
+                      : "Upload photo of the completed repair"}
                   </strong>
-
                   <span>
-                    This will be shown to the citizen as proof of
-                    resolution.
+                    This photo will be shown to the citizen for sign-off.
                   </span>
 
                   <input
@@ -489,31 +352,25 @@ export default function OfficerDashboard() {
                     accept="image/*"
                     required
                     onChange={(e) => {
-                      setAfterImage(
-                        e.target.files?.[0] || null
-                      );
+                      setAfterImage(e.target.files?.[0] || null);
                     }}
                   />
 
                   {afterImage && (
                     <div className="selected-file">
-                      <CheckCircle2 size={16} />
-
-                      {afterImage.name}
+                      <CheckCircle2 size={15} />
+                      <span>{afterImage.name}</span>
                     </div>
                   )}
                 </div>
               </div>
 
               <div className="form-group">
-                <label>Resolution Remarks</label>
-
+                <label>Officer Field Remarks</label>
                 <textarea
-                  placeholder="Describe what was fixed..."
+                  placeholder="Describe the actions taken (materials used, repairs done, safety measures, etc.)..."
                   value={remarks}
-                  onChange={(e) =>
-                    setRemarks(e.target.value)
-                  }
+                  onChange={(e) => setRemarks(e.target.value)}
                   rows={4}
                 />
               </div>
@@ -526,26 +383,25 @@ export default function OfficerDashboard() {
               )}
 
               <div className="resolve-actions">
-                <button
+                <Button
                   type="button"
-                  className="secondary-button"
+                  variant="secondary"
                   onClick={closeResolveForm}
                   disabled={resolvingId === selectedIssue.id}
                 >
                   Cancel
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="submit"
-                  className="primary-button"
-                  disabled={resolvingId === selectedIssue.id}
+                  variant="fin"
+                  icon={Send}
+                  loading={resolvingId === selectedIssue.id}
                 >
-                  <Send size={17} />
-
                   {resolvingId === selectedIssue.id
                     ? "Submitting..."
-                    : "Submit Resolution"}
-                </button>
+                    : "Confirm Resolution"}
+                </Button>
               </div>
             </form>
           </div>

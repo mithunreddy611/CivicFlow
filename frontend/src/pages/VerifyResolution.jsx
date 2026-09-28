@@ -3,12 +3,16 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   CheckCircle2,
-  Clock3,
   ImageOff,
   MapPin,
   XCircle,
+  Building2,
+  User,
 } from "lucide-react";
 import api from "../services/api";
+import Navbar from "../components/layout/Navbar";
+import { StatusBadge } from "../components/ui/Badge";
+import Button from "../components/ui/Button";
 
 const BACKEND_URL = "http://127.0.0.1:8000";
 
@@ -17,9 +21,7 @@ function getImageUrl(...values) {
     (item) => typeof item === "string" && item.trim() !== ""
   );
 
-  if (!value) {
-    return null;
-  }
+  if (!value) return null;
 
   if (value.startsWith("http://") || value.startsWith("https://")) {
     return value;
@@ -55,25 +57,13 @@ function VerifyResolution() {
 
         let foundIssue = null;
 
-        /*
-         * Try the officer endpoint first.
-         * If it is unavailable, use the existing citizen endpoint.
-         */
         try {
           const officerResponse = await api.get(
             `/api/officer/issues/${issueId}`
           );
-
           foundIssue = officerResponse.data;
-
-          console.log("Officer issue data:", foundIssue);
-        } catch (officerError) {
-          console.log(
-            "Officer endpoint unavailable. Falling back to /api/issues/my."
-          );
-
+        } catch {
           const response = await api.get("/api/issues/my");
-
           const issues = Array.isArray(response.data)
             ? response.data
             : response.data?.issues || [];
@@ -81,21 +71,16 @@ function VerifyResolution() {
           foundIssue = issues.find(
             (item) => String(item.id) === String(issueId)
           );
-
-          console.log("Citizen issue data:", foundIssue);
         }
 
         if (!foundIssue) {
-          setError("Issue not found.");
+          setError("Issue not found or inaccessible.");
           return;
         }
-
-        console.log("Final verification issue:", foundIssue);
 
         setIssue(foundIssue);
       } catch (err) {
         console.error("Failed to load verification issue:", err);
-
         setError(
           err.response?.data?.detail ||
             "Unable to load this issue. Please try again."
@@ -128,7 +113,6 @@ function VerifyResolution() {
       navigate("/dashboard");
     } catch (err) {
       console.error("Verification failed:", err);
-
       setError(
         err.response?.data?.detail ||
           "Unable to submit verification. Please try again."
@@ -141,20 +125,10 @@ function VerifyResolution() {
   if (loading) {
     return (
       <div className="dashboard-page">
-        <div className="dashboard-header">
-          <div className="brand">
-            <div className="brand-mark">CF</div>
-
-            <div>
-              <h1>CivicFlow</h1>
-              <p>Resolution Verification</p>
-            </div>
-          </div>
-        </div>
-
-        <main className="dashboard-content">
-          <div className="verification-card">
-            <p>Loading issue...</p>
+        <Navbar roleTitle="Citizen" />
+        <main className="dashboard-content" style={{ maxWidth: "860px" }}>
+          <div className="verification-card empty-state">
+            <p>Loading issue verification details...</p>
           </div>
         </main>
       </div>
@@ -164,38 +138,23 @@ function VerifyResolution() {
   if (error && !issue) {
     return (
       <div className="dashboard-page">
-        <div className="dashboard-header">
-          <div className="brand">
-            <div className="brand-mark">CF</div>
-
-            <div>
-              <h1>CivicFlow</h1>
-              <p>Resolution Verification</p>
-            </div>
-          </div>
-        </div>
-
-        <main className="dashboard-content">
+        <Navbar roleTitle="Citizen" />
+        <main className="dashboard-content" style={{ maxWidth: "860px" }}>
           <div className="verification-card">
-            <div className="image-error">{error}</div>
-
-            <button
-              type="button"
-              className="secondary-button"
+            <div className="auth-error">{error}</div>
+            <Button
+              variant="secondary"
+              icon={ArrowLeft}
               onClick={() => navigate("/dashboard")}
             >
-              <ArrowLeft size={18} />
               Back to Dashboard
-            </button>
+            </Button>
           </div>
         </main>
       </div>
     );
   }
 
-  /*
-   * BEFORE IMAGE
-   */
   const beforeImage = getImageUrl(
     issue?.before_image,
     issue?.before_image_url,
@@ -206,94 +165,79 @@ function VerifyResolution() {
     issue?.before_image_path
   );
 
-  /*
-   * AFTER IMAGE
-   *
-   * The uploaded resolution image currently exists at:
-   *
-   * /uploads/resolutions/ad69af581ed04f95a2e0076aeca53fe6.webp
-   *
-   * The citizen API does not return an after-image field,
-   * so we use the existing uploaded file directly.
-   */
   const afterImage = getImageUrl(
-  issue?.after_image,
-  issue?.after_image_url,
-  issue?.resolution_image,
-  issue?.resolution_image_url
-);
-  console.log("Before image:", beforeImage);
-  console.log("After image:", afterImage);
+    issue?.after_image,
+    issue?.after_image_url,
+    issue?.resolution_image,
+    issue?.resolution_image_url
+  );
 
   return (
     <div className="dashboard-page">
-      <header className="dashboard-header">
-        <div className="brand">
-          <div className="brand-mark">CF</div>
+      <Navbar roleTitle="Citizen" />
 
-          <div>
-            <h1>CivicFlow</h1>
-            <p>Resolution Verification</p>
-          </div>
-        </div>
-
+      <main className="dashboard-content" style={{ maxWidth: "900px" }}>
         <button
           type="button"
-          className="secondary-button"
+          className="secondary-button btn-sm"
           onClick={() => navigate("/dashboard")}
+          style={{
+            marginBottom: "24px",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
         >
-          <ArrowLeft size={18} />
-          Dashboard
+          <ArrowLeft size={16} />
+          <span>Back to Dashboard</span>
         </button>
-      </header>
 
-      <main className="dashboard-content">
         <div className="verification-card">
           <div className="verification-heading">
             <div>
-              <span className="proof-label">ISSUE #{issue.id}</span>
-
+              <span className="eyebrow">ISSUE #{issue.id}</span>
               <h2>{issue.title}</h2>
-
               <p>{issue.description}</p>
             </div>
 
-            <div className="status-badge">
-              <Clock3 size={16} />
-              Awaiting Verification
-            </div>
+            <StatusBadge status={issue.status} />
           </div>
 
           <div className="issue-meta">
             <div>
-              <MapPin size={17} />
-              <span>{issue.location_text || "Location not provided"}</span>
+              <MapPin size={16} />
+              <span>{issue.location_text || issue.location || "Location not provided"}</span>
             </div>
 
             <div>
-              <strong>Category:</strong> {issue.category}
+              <strong>Category:</strong>
+              <span>{issue.category?.replaceAll("_", " ")}</span>
             </div>
 
-            <div>
-              <strong>Department:</strong>{" "}
-              {issue.department_name || "Not assigned"}
-            </div>
+            {issue.department_name && (
+              <div>
+                <Building2 size={16} />
+                <span>{issue.department_name}</span>
+              </div>
+            )}
 
-            <div>
-              <strong>Officer:</strong>{" "}
-              {issue.officer_name || "Not assigned"}
-            </div>
+            {issue.officer_name && (
+              <div>
+                <User size={16} />
+                <span>{issue.officer_name}</span>
+              </div>
+            )}
           </div>
 
           <div className="before-after-grid">
             {/* BEFORE PHOTO */}
             <div className="proof-card">
-              <div className="proof-label">BEFORE</div>
+              <div className="proof-label">BEFORE REPAIR</div>
 
               {beforeImage && !imageErrors.before ? (
                 <img
                   src={beforeImage}
-                  alt="Before issue"
+                  alt="Before issue repair"
                   className="proof-image"
                   onError={() => handleImageError("before")}
                 />
@@ -307,59 +251,56 @@ function VerifyResolution() {
 
             {/* AFTER PHOTO */}
             <div className="proof-card">
-              <div className="proof-label">AFTER</div>
+              <div className="proof-label">AFTER RESOLUTION</div>
 
               {afterImage && !imageErrors.after ? (
                 <img
                   src={afterImage}
-                  alt="After resolution"
+                  alt="After issue repair"
                   className="proof-image"
                   onError={() => handleImageError("after")}
                 />
               ) : (
                 <div className="proof-placeholder">
                   <ImageOff size={32} />
-                  <span>After photo unavailable</span>
+                  <span>Resolution photo pending upload</span>
                 </div>
               )}
             </div>
           </div>
 
           <div className="verification-section">
-            <label htmlFor="remarks">Verification remarks</label>
-
+            <label htmlFor="remarks">Citizen Verification Remarks</label>
             <textarea
               id="remarks"
               value={remarks}
-              onChange={(event) => setRemarks(event.target.value)}
-              placeholder="Add an optional remark about the resolution..."
+              onChange={(e) => setRemarks(e.target.value)}
+              placeholder="Leave feedback on whether the issue was resolved satisfactorily..."
               rows={4}
               disabled={submitting}
             />
           </div>
 
-          {error && <div className="image-error">{error}</div>}
+          {error && <div className="auth-error" style={{ marginTop: "16px" }}>{error}</div>}
 
           <div className="verification-actions">
-            <button
-              type="button"
-              className="reject-button"
+            <Button
+              variant="danger"
+              icon={XCircle}
               disabled={submitting}
               onClick={() => handleVerification(false)}
             >
-              <XCircle size={18} />
               Reject Resolution
-            </button>
+            </Button>
 
-            <button
-              type="button"
-              className="approve-button"
-              disabled={submitting}
+            <Button
+              variant="fin"
+              icon={CheckCircle2}
+              loading={submitting}
               onClick={() => handleVerification(true)}
             >
-              <CheckCircle2 size={18} />
-              {submitting ? "Submitting..." : "Approve & Close"}
-            </button>
+              {submitting ? "Submitting..." : "Approve & Close Issue"}
+            </Button>
           </div>
         </div>
       </main>

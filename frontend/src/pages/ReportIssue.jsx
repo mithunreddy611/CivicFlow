@@ -6,8 +6,11 @@ import {
   MapPin,
   Send,
   AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 import api from "../services/api";
+import Navbar from "../components/layout/Navbar";
+import Button from "../components/ui/Button";
 
 export default function ReportIssue() {
   const navigate = useNavigate();
@@ -34,7 +37,6 @@ export default function ReportIssue() {
     }
 
     const formData = new FormData();
-
     formData.append("title", title);
     formData.append("description", description);
     formData.append("category", category);
@@ -51,7 +53,7 @@ export default function ReportIssue() {
       });
 
       setSuccess(
-        "Issue reported successfully. The system will automatically route it to the appropriate department."
+        "Issue reported successfully. CivicFlow has routed it to the appropriate department."
       );
 
       setTimeout(() => {
@@ -59,7 +61,6 @@ export default function ReportIssue() {
       }, 1500);
     } catch (err) {
       console.error("Failed to report issue:", err);
-
       setError(
         err.response?.data?.detail ||
           "Failed to submit the issue. Please try again."
@@ -71,16 +72,12 @@ export default function ReportIssue() {
 
   return (
     <div className="dashboard-page">
-      <header className="dashboard-header">
-        <div className="brand">
-          <div className="brand-icon">C</div>
-          <span>CivicFlow</span>
-        </div>
-      </header>
+      <Navbar roleTitle="Citizen" />
 
-      <main className="dashboard-content">
+      <main className="dashboard-content" style={{ maxWidth: "780px" }}>
         <button
-          className="secondary-button"
+          type="button"
+          className="secondary-button btn-sm"
           onClick={() => navigate("/dashboard")}
           style={{
             marginBottom: "24px",
@@ -89,31 +86,28 @@ export default function ReportIssue() {
             gap: "8px",
           }}
         >
-          <ArrowLeft size={18} />
-          Back to Dashboard
+          <ArrowLeft size={16} />
+          <span>Back to Dashboard</span>
         </button>
 
-        <section className="welcome-section">
+        <section className="welcome-section" style={{ marginBottom: "28px" }}>
           <div>
             <p className="eyebrow">CIVIC ISSUE REPORTER</p>
-
-            <h1>Report an Issue</h1>
-
+            <h1>Report a Civic Problem</h1>
             <p>
-              Tell us about the problem and CivicFlow will route it to
-              the appropriate department.
+              Describe the issue and upload a clear photo. CivicFlow's system
+              will assign the responsible department and alert field teams.
             </p>
           </div>
         </section>
 
-        <section className="issues-section">
+        <section>
           <form onSubmit={handleSubmit} className="report-form">
             <div className="form-group">
-              <label>Issue Title</label>
-
+              <label>Issue Title *</label>
               <input
                 type="text"
-                placeholder="Example: Large pothole near main road"
+                placeholder="Example: Deep pothole near main traffic junction"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
@@ -121,8 +115,7 @@ export default function ReportIssue() {
             </div>
 
             <div className="form-group">
-              <label>Category</label>
-
+              <label>Category *</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
@@ -132,16 +125,15 @@ export default function ReportIssue() {
                 <option value="POTHOLE">Pothole</option>
                 <option value="ROAD_DAMAGE">Road Damage</option>
                 <option value="STREETLIGHT">Streetlight</option>
-                <option value="GARBAGE">Garbage</option>
+                <option value="GARBAGE">Garbage & Waste</option>
                 <option value="WATER_LEAKAGE">Water Leakage</option>
               </select>
             </div>
 
             <div className="form-group">
-              <label>Description</label>
-
+              <label>Detailed Description *</label>
               <textarea
-                placeholder="Describe the issue in detail..."
+                placeholder="Explain the issue, severity, or any hazards to commuters..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={5}
@@ -150,14 +142,13 @@ export default function ReportIssue() {
             </div>
 
             <div className="form-group">
-              <label>
-                <MapPin size={17} style={{ verticalAlign: "middle" }} />{" "}
-                Location
+              <label style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <MapPin size={15} />
+                <span>Location Address / Landmark *</span>
               </label>
-
               <input
                 type="text"
-                placeholder="Example: Near SRM Main Gate, Kattankulathur"
+                placeholder="Example: Near SRM Main Gate, GST Road, Kattankulathur"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 required
@@ -165,23 +156,27 @@ export default function ReportIssue() {
             </div>
 
             <div className="form-group">
-              <label>Before Photo</label>
-
+              <label>Evidence Photo (Before) *</label>
               <div className="upload-box">
                 <Upload size={28} />
-
-                <p>
-                  {image
-                    ? image.name
-                    : "Upload a photo showing the issue"}
-                </p>
+                <strong>
+                  {image ? image.name : "Click or drag to upload issue photo"}
+                </strong>
+                <span>Supports JPG, PNG or WEBP (Max 10MB)</span>
 
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setImage(e.target.files[0])}
+                  onChange={(e) => setImage(e.target.files?.[0] || null)}
                   required
                 />
+
+                {image && (
+                  <div className="selected-file">
+                    <CheckCircle2 size={15} />
+                    <span>File selected: {image.name}</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -194,23 +189,21 @@ export default function ReportIssue() {
 
             {success && (
               <div className="auth-success">
+                <CheckCircle2 size={18} />
                 <span>{success}</span>
               </div>
             )}
 
-            <button
+            <Button
               type="submit"
-              className="primary-button"
-              disabled={loading}
-              style={{
-                border: "none",
-                cursor: loading ? "not-allowed" : "pointer",
-              }}
+              variant="fin"
+              size="lg"
+              loading={loading}
+              icon={Send}
+              style={{ width: "100%", marginTop: "12px" }}
             >
-              <Send size={18} />
-
-              {loading ? "Submitting..." : "Submit Issue"}
-            </button>
+              {loading ? "Submitting Report..." : "Submit Civic Issue"}
+            </Button>
           </form>
         </section>
       </main>

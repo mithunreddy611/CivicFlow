@@ -13,7 +13,22 @@ function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "var(--canvas)",
+          color: "var(--ink-muted)",
+          fontSize: "14px",
+          fontWeight: 500,
+        }}
+      >
+        Loading CivicFlow...
+      </div>
+    );
   }
 
   if (!user) {
